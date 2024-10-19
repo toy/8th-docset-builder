@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+
+require 'pathname'
+require 'uri'
+require 'nokogiri'
+
+OUT = Pathname('out')
+OUT.mkpath
+
+Pathname.glob('basis/*.html') do |src|
+  doc = src.open{ |f| Nokogiri::HTML(f) }
+
+  doc.search('h2').each do |h2|
+    namespace = h2.at('~ p strong').text
+
+    # copy namespace name to attribute
+    h2['title'] = namespace
+
+    table = h2.at('~ p ~ table')
+
+    table.search('> tbody > tr').each do |tr|
+      strong = tr.at('> td:first-child strong')
+
+      if strong
+        # prepend namespace
+        strong.add_previous_sibling(Nokogiri::XML::Text.new("#{namespace}:", doc))
+
+        # create anchor
+        strong['id'] = "#{namespace}:#{strong.text}"
+      else
+        # link mentioned word
+        tr.search('code').each do |code|
+          next unless code.text =~ /\A\S+:\S+\z/
+
+          code.wrap('<a></a>')
+          code.parent['href'] = "##{URI.encode_uri_component(code.text)}"
+        end
+
+        # link referenced words
+        tr.traverse do |node|
+          next unless node.text?
+          next unless m = node.content.match(/\A(?<text>.*See also: )(?<words>.*)\z/)
+
+          node.content = m[:text]
+
+          insert = node
+
+          m[:words].split(' ').each_with_index do |word, i|
+            insert = insert.add_next_sibling(Nokogiri::XML::Text.new(' ', doc)) unless i.zero?
+
+            a = Nokogiri::XML::Node.new('a', doc)
+            a['href'] = "##{URI.encode_uri_component(word)}"
+            a.content = word
+
+            insert = insert.add_next_sibling(a)
+          end
+        end
+      end
+    end
+  end
+
+  (OUT / src.basename).open('w'){ |f| f.write(doc.to_html) }
+end

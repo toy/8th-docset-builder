@@ -1,0 +1,12 @@
+{
+  "name": "The 8th™ Programming Language",
+  "version": "24.06",
+  "archive": "8th.docset.tgz",
+  "author": {
+    "name": "Ivan Kuchin",
+    "link": "https://github.com/toy"
+  },
+  "aliases": [
+    "8th"
+  ]
+}

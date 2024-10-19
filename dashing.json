@@ -1,0 +1,10 @@
+{
+  "name": "The 8th™ Programming Language",
+  "package": "8th",
+  "index": "words.html",
+  "externalURL": "https://8th-dev.com/words.html",
+  "selectors": {
+    "h2": {"attr": "title", "type": "Namespace"},
+    "h2 ~ p ~ table > tbody > tr:nth-child(odd) > td:first-child strong": {"attr": "id", "type": "Word"}
+  }
+}
